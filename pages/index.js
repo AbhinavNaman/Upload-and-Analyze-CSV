@@ -166,7 +166,7 @@ export default function Home() {
       // Step 1: Upload the file to the Python backend
       console.log('Uploading file to the Python backend...');
       const uploadResponse = await axios.post(
-        'upload-and-analyze-csv-backend.vercel.app/upload_csv',
+        'https://upload-and-analyze-csv-backend.onrender.com/upload_csv',
         formData,
         {
           headers: {
@@ -182,7 +182,7 @@ export default function Home() {
         // Step 2: Send the base64 encoded DataFrame to the Flask proxy endpoint (POST request)
         console.log('Sending base64 encoded DataFrame to Flask proxy endpoint...');
         const postResponse = await axios.post(
-          'upload-and-analyze-csv-backend.vercel.app/proxy_post',
+          'https://upload-and-analyze-csv-backend.onrender.com/proxy_post',
           { dataframe: base64String },
           { headers: { 'Content-Type': 'application/json' } }
         );
@@ -193,7 +193,7 @@ export default function Home() {
           // Step 3: Query the Flask proxy endpoint for the plot (GET request)
           console.log('Sending request to query DataFrame via Flask proxy endpoint...');
           const queryResponse = await axios.get(
-            'upload-and-analyze-csv-backend.vercel.app/proxy_get',
+            'https://upload-and-analyze-csv-backend.onrender.com/proxy_get',
             {
               params: {
                 input: chartInput,
