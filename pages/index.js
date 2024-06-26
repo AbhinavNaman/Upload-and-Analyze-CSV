@@ -144,9 +144,9 @@ export default function Home() {
   };
 
   return (
-    <div className={styles.container} style={{ display: "flex" , width:"100%"}}>
+    <div className={styles.container} >
       <div style={{flex:"1"}}>
-        <h1 className={styles.title}>Upload and Analyze CSV</h1>
+        <h1 className={styles.title}>LLM Dashboard</h1>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.fileInputContainer}>
             <input
