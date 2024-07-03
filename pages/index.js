@@ -53,8 +53,8 @@ export default function Home() {
     try {
       console.log("Uploading file to the Python backend...");
       const uploadResponse = await axios.post(
-        // "https://upload-and-analyze-csv-backend.onrender.com/proxy_post",
-        "http://localhost:5000/proxy_post",
+        "https://upload-and-analyze-csv-backend.onrender.com/proxy_post",
+        // "http://localhost:5000/proxy_post",
         formData,
         {
           headers: {
@@ -94,8 +94,8 @@ export default function Home() {
         "Sending request to query DataFrame via Flask proxy endpoint..."
       );
       const queryResponse = await axios.get(
-        // "https://upload-and-analyze-csv-backend.onrender.com/proxy_get",
-        "http://localhost:5000/proxy_get",
+        "https://upload-and-analyze-csv-backend.onrender.com/proxy_get",
+        // "http://localhost:5000/proxy_get",
         {
           params: {
             input: chartInput,
