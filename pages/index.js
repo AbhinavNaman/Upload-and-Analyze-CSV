@@ -37,7 +37,7 @@ export default function Home() {
     setLoading(false);
   };
 
-  const handleSubmit = async (e) => {
+  const handleUpload = async (e) => {
     e.preventDefault();
 
     if (!file) {
@@ -51,10 +51,10 @@ export default function Home() {
     formData.append("file", file);
 
     try {
-      // Step 1: Upload the file to the Python backend
       console.log("Uploading file to the Python backend...");
       const uploadResponse = await axios.post(
-        "https://upload-and-analyze-csv-backend.onrender.com/upload_csv",
+        // "https://upload-and-analyze-csv-backend.onrender.com/proxy_post",
+        "http://localhost:5000/proxy_post",
         formData,
         {
           headers: {
@@ -70,66 +70,7 @@ export default function Home() {
           base64String
         );
 
-        // Step 2: Send the base64 encoded DataFrame to the Flask proxy endpoint (POST request)
-        console.log(
-          "Sending base64 encoded DataFrame to Flask proxy endpoint..."
-        );
-        const postResponse = await axios.post(
-          "https://upload-and-analyze-csv-backend.onrender.com/proxy_post",
-          { dataframe: base64String },
-          { headers: { "Content-Type": "application/json" } }
-        );
-
-        if (postResponse.status === 200) {
-          console.log(
-            "DataFrame uploaded successfully to Flask proxy endpoint."
-          );
-
-          // Step 3: Query the Flask proxy endpoint for the plot (GET request)
-          console.log(
-            "Sending request to query DataFrame via Flask proxy endpoint..."
-          );
-          const queryResponse = await axios.get(
-            "https://upload-and-analyze-csv-backend.onrender.com/proxy_get",
-            {
-              params: {
-                input: chartInput,
-                chart_format: chartFormat,
-              },
-            }
-          );
-
-          if (queryResponse.status === 200) {
-            const responseData = queryResponse.data;
-            console.log("Query response received:", responseData);
-
-            if (responseData.figure) {
-              const figBytes = Uint8Array.from(atob(responseData.figure), (c) =>
-                c.charCodeAt(0)
-              );
-
-              if (responseData.chart_type === "simple") {
-                const blob = new Blob([figBytes.buffer], { type: "image/png" });
-                const url = URL.createObjectURL(blob);
-                setImageSrc(url);
-              } else if (responseData.chart_type === "vega") {
-                const chartJson = new TextDecoder().decode(figBytes);
-                const chartSpec = JSON.parse(chartJson);
-                setChartSpec(chartSpec);
-              }
-            } else {
-              setResponse("Unexpected response format.");
-            }
-          } else {
-            setResponse(
-              `Failed to generate plot or query. Status code: ${queryResponse.status}`
-            );
-          }
-        } else {
-          setResponse(
-            `Failed to upload DataFrame. Status code: ${postResponse.status}`
-          );
-        }
+        setResponse("File uploaded successfully.");
       } else {
         setResponse(
           `Failed to upload DataFrame to Python backend. Status code: ${uploadResponse.status}`
@@ -137,17 +78,71 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Error:", error);
-      setResponse("An error occurred while processing your request.");
+      setResponse("An error occurred while uploading the file.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateChart = async (e) => {
+    e.preventDefault();
+
+    setLoading(true);
+
+    try {
+      console.log(
+        "Sending request to query DataFrame via Flask proxy endpoint..."
+      );
+      const queryResponse = await axios.get(
+        // "https://upload-and-analyze-csv-backend.onrender.com/proxy_get",
+        "http://localhost:5000/proxy_get",
+        {
+          params: {
+            input: chartInput,
+            chart_format: chartFormat,
+          },
+        }
+      );
+
+      if (queryResponse.status === 200) {
+        const responseData = queryResponse.data;
+        console.log("Query response received:", responseData);
+
+        if (responseData.figure) {
+          const figBytes = Uint8Array.from(atob(responseData.figure), (c) =>
+            c.charCodeAt(0)
+          );
+
+          if (responseData.chart_type === "simple") {
+            const blob = new Blob([figBytes.buffer], { type: "image/png" });
+            const url = URL.createObjectURL(blob);
+            setImageSrc(url);
+          } else if (responseData.chart_type === "vega") {
+            const chartJson = new TextDecoder().decode(figBytes);
+            const chartSpec = JSON.parse(chartJson);
+            setChartSpec(chartSpec);
+          }
+        } else {
+          setResponse("Unexpected response format.");
+        }
+      } else {
+        setResponse(
+          `Failed to generate plot or query. Status code: ${queryResponse.status}`
+        );
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setResponse("An error occurred while generating the chart.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className={styles.container} >
-      <div style={{flex:"1"}}>
+    <div className={styles.container}>
+      <div style={{ flex: "1" }}>
         <h1 className={styles.title}>LLM Dashboard</h1>
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form className={styles.form}>
           <div className={styles.fileInputContainer}>
             <input
               type="file"
@@ -200,12 +195,22 @@ export default function Home() {
           </div>
           <div className={styles.buttonGroup}>
             <button
-              type="submit"
+              type="button"
               className={styles.button}
+              onClick={handleUpload}
               disabled={loading}
               style={{ display: loading ? "none" : "" }}
             >
               Upload
+            </button>
+            <button
+              type="button"
+              className={styles.button}
+              onClick={handleGenerateChart}
+              disabled={loading}
+              style={{ display: loading ? "none" : "" }}
+            >
+              Generate Chart
             </button>
             <button
               type="button"
@@ -219,7 +224,7 @@ export default function Home() {
         </form>
         {loading && <div className={styles.loader}></div>}
       </div>
-      <div style={{flex:"1"}}>
+      <div style={{ flex: "1" }}>
         {response && <p className={styles.response}>{response}</p>}
         {imageSrc && (
           <img src={imageSrc} alt="Generated Plot" className={styles.image} />
